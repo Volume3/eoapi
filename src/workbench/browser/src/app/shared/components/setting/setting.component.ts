@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { NzTabPosition } from 'ng-zorro-antd/tabs';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Message, MessageService } from '../../../shared/services/message';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'eo-setting',
@@ -14,12 +16,22 @@ export class SettingComponent implements OnInit {
   modules = [];
   settings = {};
   validateForm!: FormGroup;
-  constructor(
-    private fb: FormBuilder,
-  ) {}
+  private destroy$: Subject<void> = new Subject<void>();
+  constructor(private fb: FormBuilder, private messageService: MessageService) {}
 
   ngOnInit(): void {
     this.init();
+    this.messageService
+      .get()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((inArg: Message) => {
+        switch (inArg.type) {
+          case 'toggleSettingModalVisible': {
+            inArg.data.isShow ? this.handleShowModal() : this.handleCancel();
+            break;
+          }
+        }
+      });
   }
 
   private init() {
@@ -37,7 +49,7 @@ export class SettingComponent implements OnInit {
         }
         const fields = [];
         for (let field_key in feature['properties']) {
-          let field = feature['properties'][field_key]; 
+          let field = feature['properties'][field_key];
           // 加入允许的type限制
           if (!field['type'] || !field['label']) {
             continue;
@@ -46,13 +58,16 @@ export class SettingComponent implements OnInit {
             continue;
           }
           const name = key + '_' + field_key;
-          field = Object.assign({
-            name: name,
-            key: field_key,
-            required: false,
-            default: '',
-            description: ''
-          }, field);
+          field = Object.assign(
+            {
+              name: name,
+              key: field_key,
+              required: false,
+              default: '',
+              description: '',
+            },
+            field
+          );
           fields.push(field);
           if (!this.settings[key][field_key]) {
             this.settings[key][field_key] = field['default'];
@@ -61,7 +76,7 @@ export class SettingComponent implements OnInit {
           if (field.required) {
             controls[name] = [null, [Validators.required]];
           } else {
-            controls[name] = [null]; 
+            controls[name] = [null];
           }
         }
         this.modules.push({
