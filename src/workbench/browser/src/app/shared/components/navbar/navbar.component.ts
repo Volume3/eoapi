@@ -96,16 +96,10 @@ export class NavbarComponent implements OnInit {
   }
 
   /**
-   * 切换数据源
-   */
-  toGoggleDataOrigin() {
-    this.isRemote = !this.isRemote;
-  }
-
-  /**
    * 切换到单机
    */
   switchToStandAlone(template: TemplateRef<{}>): void {
+    this.isRemote = false;
     this.nzNotificationRef = this.notification.template(template, {
       nzStyle: {
         position: 'fixed',
@@ -121,7 +115,6 @@ export class NavbarComponent implements OnInit {
         backgroundColor: 'rgb(255, 219, 7)',
       },
       nzDuration: 0,
-      nzClass: 'test-class',
     });
   }
 
@@ -129,8 +122,8 @@ export class NavbarComponent implements OnInit {
    * 切换到远程
    */
   switchToRemote() {
-    console.log('this.nzNotificationRef', this.nzNotificationRef);
-    this.message.remove(this.nzNotificationRef.messageId);
+    this.isRemote = true;
+    this.nzNotificationRef?.messageId && this.notification.remove(this.nzNotificationRef.messageId);
     this.message.create('success', '成功切换至远程数据源');
   }
 }
